@@ -1,0 +1,141 @@
+\documentclass{amsart}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsthm, amsmath, amssymb, amsfonts} % general mathmode commands
+\usepackage{bm} % for \bm
+\usepackage{stmaryrd} % for \nnearrow
+\usepackage{cancel} % for \cancel
+\usepackage{breqn} % automatic line breaks in equations
+\usepackage[margin=2.5cm]{geometry} % for page layout
+\usepackage{cancel} % for \cancel
+\usepackage{algorithm2e} % for algorithms
+\usepackage{bbm} % for \mathbbm{1}
+\usepackage{mathtools} % for \coloneq
+\usepackage{hyperref}
+\usepackage{nicefrac}
+\usepackage{float}
+\usepackage{biblatex}
+\usepackage{lipsum}
+\usepackage{placeins}
+\usepackage{booktabs}
+\usepackage{xcolor,colortbl}
+\usepackage{makecell}
+\RestyleAlgo{ruled}
+
+% \new theorems definition
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{definition}
+\newtheorem{example}[section]{Example}
+\newtheorem{conjecture}[section]{Conjecture}
+
+\theoremstyle{remark}
+\newtheorem{remark}[section]{Remark}
+
+% \newcommand
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator{\err}{Err}
+\DeclareMathOperator{\softmax}{softmax}
+\newcommand{\diff}{\mathrm{d}}
+\title{Two Complement Computer Representation}
+\author{Mark Sverdlov}
+\date{October 2025}
+
+\begin{document}
+
+    \begin{abstract}
+        Two complement is a method in computing to represent signed integers physically. It turns out that this method has some attractive mathematical properties regarding its interaction with simple arithmetical operators, that make it useful in practical sense for computers. This work states and proves these properties.
+    \end{abstract}
+    \maketitle
+    \section{Introduction} 
+       A basic task of computer hardware is to make arithmetical computations. The computer is usually given two operands, in the form of binary words of some fixed size and an operator code, and should output a binary word, consisting a physical representation of the appropriate result of the operation on the numerical meaning of the two physical binary words given as input. In addition to that, due to the computer being a machine in its core, we want the whole
+       operation to be fast, simple and reliable as possible, to support millions of operations every second. This means, we have to discuss \emph{representations} of the numerical values and the binary words and \emph{algorithms} that the computer execute over these binary words.
+
+    To understand these two components of computer engineering, we define mathematically what they mean, define the representations and algorithms used in real life computing, and prove that these representations  and algorithms hold some very attractive properties that mean they they are essentially easy to compute.
+
+\section{Representations}
+\begin{definition}
+    Fix some \emph{word-size} \(n\). We define the \emph{space of byte words} to be:
+    \begin{equation*}
+        \mathcal{P} = \left\{0,\ldots,2^{n}-1\right\}
+    \end{equation*}
+\end{definition}
+We note that each of the numbers in this set, may be represented in binary representation with up to \(n\) bits. We think of the elements of this space as these representations (with trailing zeros to the left if required) and define bitwise operator on elements of this set accordingly, for example, suppose \(x \in \mathcal{P}\), then \(\mathrm{Not}\left(x\right)\) is the element in \(\mathcal{P}\), consisting of the inverted binary representation,
+e.g.\ \(\mathrm{Not}\left(0\right) = 2^{n}-1\).
+\begin{definition}
+    Fix some \emph{word-size} \(n\). We define the \emph{space of unsigned integers} to be:
+    \begin{equation*}
+\mathcal{U} = \left\{0,\ldots,2^{n}-1\right\}
+    \end{equation*}
+    We define the \emph{space of signed integers} to be:
+    \begin{equation*}
+        \mathcal{P} = \left(\{k \in \mathbb{Z} \vert -2^{n-1}\leq k \leq 2^{n-1}-1\}\right)
+    \end{equation*}
+\end{definition}
+For these sets, we consider the elements therein as actual integer numbers with all the integer arithmetic operations, with the caveat that it is possible, for example, that \(x,\,y \in \mathcal{U}\) but \(x + y \notin \mathcal{U}\), and similarly for other operations and the other set.
+
+\begin{definition}
+    We define a \emph{representation} of some set \(X\) with word-size \(n\) as an isomorphism: 
+    \begin{equation*}
+        r: \ X \rightarrow \mathcal{P}
+    \end{equation*}
+    We also define two concrete representations for \(\mathcal{U}\) and \(\mathcal{I}\):
+    \begin{align*}
+        r_{\mathcal{U}}: \ \mathcal{U}&\rightarrow \mathcal{P} \\
+        r_{\mathcal{I}}: \ \mathcal{I}&\rightarrow \mathcal{P}
+    \end{align*}
+    whereas \(r_{\mathcal{U}}\) simply send each element to its binary representation, and \(r_{\mathcal{I}}\) is defined as the following:
+    \begin{equation*}
+        r_{\mathcal{I}} \left(x\right)= 
+        \begin{cases}
+            \text{binary representation of }x & x \geq 0 \\
+            \text{binary representation of }2^{n} + x & x < 0 \\
+        \end{cases}
+    \end{equation*}
+\end{definition}
+We state the following trivial statements:
+\begin{theorem}
+   \begin{enumerate}
+       \item \(r_{\mathcal{U}}\) and \(r_{\mathcal{I}}\) are both isomorphisms and therefore representations.
+       \item For \(x \in \mathcal{U}\cap \mathcal{I}\), \(r_{\mathcal{U}}\left(x\right) = r_{\mathcal{I}} \left(x\right)\).
+   \end{enumerate} 
+\end{theorem}
+Due to the second part of the theorem, we slightly abuse the notation and use \(r\) for both \(r_{\mathcal{U}}\) and \(r_{\mathcal{I}}\) whenever it doesn't cause confusion.
+
+\section{The Addition Algorithm}
+The most important and basic algorithms used is the addition of two binary words \(x,\,y \in \mathcal{P}\). We loop on the length of the word from the lease significant bit to the most.
+\begin{algorithm}
+    \SetKwInput{Input}{Input}
+    \SetKwInOut{Output}{Output}
+    \Input{\(a\) --- a byte word, \(b\) --- a byte word}
+    \Output{\(S\) --- \(a + b\)}
+    carry \(\leftarrow 0\); \\
+    \For{\(i \in \left\{0,\ldots,n-1\right\}\)}{
+    \(S \left[i\right] \leftarrow a\left[i\right] \; \mathrm{XOR} \; b\left[i\right] \; \mathrm{XOR} \; \text{carry}\); \\
+    \(\text{carry} \leftarrow \left(a \left[i\right] \; \mathrm{AND} \; b \left[i\right] \right) \; \mathrm{OR} \; \left(\left(a \left[i\right] \; \mathrm{OR} \; b\left[i\right] \right) \; \mathrm{AND} \; carry\right)\);
+}
+\Return{S};
+\caption{addition of two byte words}
+\end{algorithm}
+We note that this is an \(O \left(n\right)\) time complexity algorithm that is almost equivalent to usual addition --- except it breaks down for \(a + b \geq 2^{n}\).
+\begin{definition}
+    Suppose \(a,\,b \in \mathcal{P}\). We define \(a \oplus b \in \mathcal{P}\) to be the result of the algorithm when \(a\) and \(b\) are the inputs.
+\end{definition}
+\begin{theorem}
+    \begin{enumerate}
+        \item Suppose \(x,\,y \in \mathcal{U}\) and \(x + y \in \mathcal{U}\), then \(r \left(x + y\right) = r \left(x\right) \oplus r \left(y\right)\).
+        \item Suppose \(x,\,y \in \mathcal{I}\) and \(x + y \in \mathcal{I}\), then \(r \left(x + y\right) = r \left(x\right) \oplus r \left(y\right)\).
+    \end{enumerate}
+\end{theorem}
+\begin{proof}
+    We first state two very important facts about \(r\) and about \(\oplus\). First, note that if we consider the elements of \(\mathcal{P}\) as numbers, then for all \(a,\,b \in \mathcal{P}\) then \(a \oplus b\) is equivalent modulo \(2^{n}\) to \(a + b\) with the usual numerical addition, and that with the same consideration, for any \(x \in \mathcal{U}\cup \mathcal{I}\) we have \(r \left(x\right)\) is equivalent to \(x\) modulo \(2^{n}\). Second, we note that
+    \(\mathcal{P}\) is a section of the equivalence relationship modulo \(2^{n}\), i.e.\ that it contains exactly one representative of each equivalence class modulo \(2^{n}\). The first fact suggests equivalency modulo \(2^{n}\) of \(r \left(x + y\right)\) and \(r \left(x\right) \oplus r\left(y\right)\) for both cases. From the second fact we may deduce that since they are both element of \(\mathcal{P}\) and they are equivalent modulo \(2^{n}\) they are in fact equal.
+\end{proof}
+This theorem suggests that our addition algorithm indeed works as expected, and in fact that as long as there isn't overflow, addition and subtraction work.
+\end{document}
