@@ -1,0 +1,35 @@
+    // A register
+    Not(in=instruction[15], out=loadAFromInstruction);
+    Or(a=instruction[5], b=loadAFromInstruction, out=loadA);
+    Mux16(a=ALUOut, b=instruction, sel=loadAFromInstruction, out=inA);
+    Register(in=inA, load=loadA, out=internaloutA);
+    And16(a=internaloutA, b=true, out[0..14]=addressM);
+
+    // M register
+    Register(in=inM, load=true, out=internaloutM);
+    And16(a=ALUOut, b=true, out=outM);  // This goes to the memory chip
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+
+    // D-register
+    And(a=instruction[15], b=instruction[4], out=loadD);
+    Register(in=ALUOut, load=loadD, out=internaloutD);
+    Mux16(a=ALUOut, b=internaloutD, sel=loadD, out=DRegister);
+
+    // ALU
+    Mux16(a=internaloutA, b=internaloutM, sel=instruction[12], out=AorM);
+    ALU(x=internaloutD, y=AorM, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=ALUOut, zr=zr, ng=ng);
+
+    // Jumping logic
+    Not(in=ng, out=pos);
+    And(a=ng, b=instruction[2], out=jump1);
+    And(a=zr, b=instruction[1], out=jump2);
+    And(a=pos, b=instruction[0], out=jump3);
+    Or(a=jump1, b=jump2, out=jump4);
+    Or(a=jump3, b=jump4, out=jump);
+
+    // Jump Mechanics
+    PC(in=internaloutA, inc=true, load=jump, reset=false, out=pc1);
+    Inc16(in=pc1, out=following);
+    Mux16(a=following, b=internaloutA, out[0..14]=pc);
+
