@@ -1,0 +1,3 @@
+[submodule "proj-06"]
+	path = proj-06
+	url = git@github.com:MarkSverdlov/hack-assembler.git
