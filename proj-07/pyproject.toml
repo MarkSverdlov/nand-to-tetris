@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hack-vm-translator"
+version = "0.1.0"
+
+[project.scripts]
+translate = "translator.translator:main"
+
+[tool.tox]
+requires=["tox>=4"]
+env_list = ["test"]
+
+[tool.tox.env.test]
+description = "run unit tests"
+deps = [
+    "pytest>=8"
+]
+commands = [[ "pytest", { replace = "posargs", default = ["tests"], extend = true }]]
